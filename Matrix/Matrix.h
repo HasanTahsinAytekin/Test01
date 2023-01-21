@@ -30,7 +30,7 @@ namespace Matrix {
         }
 
         ~Matrix() {
-            std::cout << "Matrix destructor ...";
+            std::cout << "Matrix destructor ...\n";
         }
 };  // Matrix
 

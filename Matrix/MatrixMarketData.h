@@ -70,12 +70,30 @@ namespace MatrixMarketData {
             std::cout << header_string << std::endl;
         }
 
+        void readHeader(std::string identifier, std::string object, std::string format, std::string field, std::string symmetry) {
+            std::cout << identifier << std::endl;
+            std::cout << object << std::endl;
+            std::cout << format << std::endl;
+            std::cout << field << std::endl;
+            std::cout << symmetry << std::endl;
+        }
+
         void readMatrixData(std::string file_name) {
             std::string aLine;
             std::ifstream f(file_name);
 
             // Read the header
-            if (f >> aLine) parseHeader(aLine);
+            Header matrixHeader;
+            //readHeader(f);
+            std::string identifier;
+            std::string object;
+            std::string format;
+            std::string field;
+            std::string symmetry;
+            if (f >> identifier >> object >> format >> field >> symmetry) {
+                readHeader(identifier, object, format, field, symmetry);
+            }
+
         }
     public:
         MatrixMarketData(std::string FileName) {
@@ -85,7 +103,7 @@ namespace MatrixMarketData {
 
         ~MatrixMarketData(){
             // Destructor of the class
-            std::cout << "MatrixMarketData destructor ...";
+            std::cout << "MatrixMarketData destructor ...\n";
         }
     };
 
