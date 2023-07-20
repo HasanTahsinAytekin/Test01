@@ -1,14 +1,13 @@
 //
-// Created by Hasan Aytekin on 21.01.2023.
+// Created by Hasan Aytekin on 15.07.2023.
 //
-
 #include <iostream>
 #include <fstream>
 
-#ifndef MATRIX_MATRIXMARKETDATA_H
-#define MATRIX_MATRIXMARKETDATA_H
+#ifndef MATRIXMARKETDATA_MATRIXMARKETDATA_H
+#define MATRIXMARKETDATA_MATRIXMARKETDATA_H
 
-namespace MatrixMarketData {
+namespace Matrix {
 
     enum ObjectType {
         Matrix,
@@ -51,7 +50,7 @@ namespace MatrixMarketData {
         struct Comment {
             std::string Text;
         };
-        struct Size {
+        struct MatrixSize {
             std::int64_t Rows;
             std::int64_t Columns;
             std::int64_t NumberOfEntries;
@@ -136,101 +135,24 @@ namespace MatrixMarketData {
                     break;
             }
             //os << header << std::endl;
-            
+
             return os;
         }
+        friend std::ostream& operator << (std::ostream& os, const Comment& comment)
+        {
+            //return os << header.Identifier  << header.Object << header.Field <<   header.Format << header.Symmetry << std::endl;
 
-        void parseHeader(std::string header_string) {
-            std::string delimiter = " ";
-            std::size_t pos = 0;
-            std::string token;
-            while ((pos = header_string.find(delimiter)) != std::string::npos) {
-                token = header_string.substr(0, pos);
-                std::cout << token << std::endl;
-                header_string.erase(0, pos + delimiter.length());
-            }
-            std::cout << header_string << std::endl;
+            os << comment.Text << std::endl;
+
+            return os;
         }
+        friend std::ostream& operator << (std::ostream& os, const MatrixSize& matrixSize)
+        {
+            os << "Matrix Size: \n   Rows: " << matrixSize.Rows << std::endl
+                    << "   Columns: " << matrixSize.Columns << std::endl
+                    << "   Num. of non-zero entries: " << matrixSize.NumberOfEntries << std::endl;
 
-        void printHeader(std::string identifier, std::string object, std::string format, std::string field, std::string symmetry) {
-            std::cout << identifier << std::endl;
-            std::cout << object << std::endl;
-            std::cout << format << std::endl;
-            std::cout << field << std::endl;
-            std::cout << symmetry << std::endl;
-        }
-
-        void printHeader(Header matrixHeader) {
-
-            std::cout << "Identifier: " << matrixHeader.Identifier << std::endl;
-
-            std::cout << "Object: ";
-            switch (matrixHeader.Object) {
-                case Matrix:
-                    std::cout << "Matrix" << std::endl;
-                    break;
-                case Vector:
-                    std::cout << "Vector" << std::endl;
-                    break;
-                case UnknownObject:
-                    std::cout << "UnknownObject" << std::endl;
-                    break;
-            }
-
-            std::cout << "Format: ";
-            switch (matrixHeader.Format) {
-                case Coordinate:
-                    std::cout << "Coordinate" << std::endl;
-                    break;
-                case Array:
-                    std::cout << "Array" << std::endl;
-                    break;
-                case UnknownFormat:
-                    std::cout << "UnknownFormat" << std::endl;
-                    break;
-            }
-
-            std::cout << "Field: ";
-            switch (matrixHeader.Field) {
-                case Real:
-                    std::cout << "Real" << std::endl;
-                    break;
-                case Double:
-                    std::cout << "Double" << std::endl;
-                    break;
-                case Complex:
-                    std::cout << "Complex" << std::endl;
-                    break;
-                case Integer:
-                    std::cout << "Integer" << std::endl;
-                    break;
-                case Pattern:
-                    std::cout << "Pattern" << std::endl;
-                    break;
-                case UnknownField:
-                    std::cout << "UnknownField" << std::endl;
-                    break;
-            }
-
-            std::cout << "Symmetry: ";
-            switch (matrixHeader.Symmetry) {
-                case General:
-                    std::cout << "General" << std::endl;
-                    break;
-                case Symmetric:
-                    std::cout << "Symmetric" << std::endl;
-                    break;
-                case SkewSymmetric:
-                    std::cout << "SkewSymmetric" << std::endl;
-                    break;
-                case Hermitian:
-                    std::cout << "Hermitian" << std::endl;
-                    break;
-                case UnknownSymmetry:
-                    std::cout << "UnknownSymmetry" << std::endl;
-                    break;
-            }
-            //std::cout << matrixHeader << std::endl;
+            return os;
         }
 
         Header readHeader(std::ifstream &f) {
@@ -257,29 +179,111 @@ namespace MatrixMarketData {
                                         (symmetry == "symmetric") ? Symmetric :
                                         (symmetry == "skewSymmetric") ? SkewSymmetric :
                                         (symmetry == "hermitian") ? Hermitian : UnknownSymmetry;
-                printHeader(identifier, object, format, field, symmetry);
+                //printHeader(identifier, object, format, field, symmetry);
                 //printHeader(matrixHeader);
             }
 
             return matrixHeader;
         }
 
+        Comment readComment(std::ifstream &f) {
+            Comment matrixComment;
+            std::string aLine;
 
-        void readMatrixData(std::string file_name) {
+            // The current position of the file pointer is on the last line end.
+            // Need to advance the current position by one character
+            //f.get();
+            f.ignore();
+            // Resume processing of the comment lines
+            while (f.peek() == '%') {
+                // Read and Log the entire line
+                if (std::getline(f,aLine)) {
+                    matrixComment.Text += aLine;
+                    matrixComment.Text.push_back('\n');
+                }
+            }
+
+            return matrixComment;
+        }
+
+        MatrixSize readMatrixSize(std::ifstream &f) {
+            MatrixSize matrixSize;
+
+            f >> matrixSize.Rows >> matrixSize.Columns >> matrixSize.NumberOfEntries;
+
+            return matrixSize;
+        }
+
+        template<typename T>
+        void readMatrixData(std::ifstream &f, MatrixSize matrixSize) {
+            T matrixCellData;
+
+            // Read the data
+            for (int line = 0; line < matrixSize.NumberOfEntries; line++)
+            {
+                int row, column;
+                f >> row >> column >> matrixCellData;
+
+                std::cout << "R: " << row << " - C: " << column << " - D: " << matrixCellData << std::endl;
+            }
+        }
+
+        void readMatrixData_Pattern(std::ifstream &f, MatrixSize matrixSize) {
+            // For FieldType = Pattern, no value fields exist. All the coordinate values are assumed to be 1.
+            auto matrixCellData = 1;
+
+            // Read the data
+            for (int line = 0; line < matrixSize.NumberOfEntries; line++)
+            {
+                int row, column;
+                f >> row >> column;
+
+                std::cout << "R: " << row << " - C: " << column << " - D: " << matrixCellData << std::endl;
+            }
+        }
+
+        void readMatrixData(std::ifstream &f, MatrixSize matrixSize, FieldType fieldType) {
+
+            switch (fieldType) {
+                case Real:
+                    readMatrixData <float> (f, matrixSize);
+                    break;
+                case Double:
+                    readMatrixData <double> (f, matrixSize);
+                    break;
+                case Complex:
+                    break;
+                case Integer:
+                    readMatrixData <int> (f, matrixSize);
+                    break;
+                case Pattern:
+                    readMatrixData_Pattern(f, matrixSize);
+                    break;
+                case UnknownField:
+                    break;
+            }
+        }
+
+        void readMatrix(std::string file_name) {
             std::string aLine;
             std::ifstream f(file_name);
 
             // Read the header
-            Header matrixHeader;
-            matrixHeader = readHeader(f);
-            std::cout << matrixHeader << std::endl;
+            Header matrixHeader = readHeader(f);
+            Comment matrixComment = readComment(f);
+            MatrixSize matrixSize = readMatrixSize(f);
 
+            std::cout << matrixHeader << std::endl;
+            std::cout << matrixComment << std::endl;
+            std::cout << matrixSize << std::endl;
+
+            readMatrixData(f, matrixSize, matrixHeader.Field);
         }
 
     public:
         MatrixMarketData(std::string FileName) {
             fileName = FileName;
-            readMatrixData(FileName);
+            readMatrix(FileName);
         }
 
         ~MatrixMarketData(){
@@ -288,6 +292,6 @@ namespace MatrixMarketData {
         }
     };
 
-} // MatrixMarketData
+} // Matrix
 
-#endif //MATRIX_MATRIXMARKETDATA_H
+#endif //MATRIXMARKETDATA_MATRIXMARKETDATA_H
