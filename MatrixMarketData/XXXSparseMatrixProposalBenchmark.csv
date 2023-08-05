@@ -1,0 +1,2 @@
+File, Rows, Columns, NonzeroEntries, Coordinate_Bytes, CSR_Bytes, SCSR_Bytes, SCSR+_Bytes
+2cubes_sphere.mtx, 101492, 101492, 874378, 17487560, 7400996, 5459308, 5459308

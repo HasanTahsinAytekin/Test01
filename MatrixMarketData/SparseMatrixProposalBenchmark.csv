@@ -1,0 +1,4 @@
+File, Rows, Columns, NonzeroEntries, MinValue, MaxValue, Coordinate_Bytes, CSR_Bytes, SCSR_Bytes, SCSR+_Bytes
+08blocks.mtx, 300, 300, 592, 1, 100, 11840, 4154, 4156, 2380
+130bit.mtx, 584, 575, 6120, 1, 1, 110160, 25650, 25652, 13412
+144.mtx, 144649, 144649, 1074393, 1, 1, 19339074, 6998194, 4640276, 2491490
