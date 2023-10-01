@@ -3,6 +3,7 @@
 //
 //#include <iostream>
 #include <fstream>
+#include <iostream>
 //#include <vector>
 #include "GlobalDeclerations.h"
 //#include "BitNumber.h"
@@ -20,6 +21,23 @@ namespace Matrix {
     std::ostream& operator << (std::ostream& os, const DataRange& dataRange);
 
     class MatrixMarketData {
+
+/*
+        int GetDataTypeLengthForIndexing(unsigned long aValue) {
+            if (aValue <= 65535) { // 2 bytes
+                return sizeof(unsigned short);
+            } else if (aValue <= 4294967295) { // 4 bytes
+                return sizeof(unsigned int);
+            } else if (aValue <= ((unsigned long)18446744073709551615)) { // 8 bytes
+                return sizeof(unsigned long);
+            }
+        }
+*/
+//        const bool DisplayResult = true;
+//        const bool DisplayProgress = true;
+//        double defaultSegmentSize = 65535; // double -> ceil function requires double
+
+
         std::string fileName;
         MatrixCollection matrixCollection;
 
@@ -74,6 +92,7 @@ namespace Matrix {
             return matrixComment;
         }
 
+/*
         int getDataTypeLengthForIndexing(unsigned long aValue) {
             if (aValue <= 65535) { // 2 bytes
                 return sizeof(unsigned short);
@@ -83,6 +102,7 @@ namespace Matrix {
                 return sizeof(unsigned long);
             }
         }
+*/
 
         MatrixSize readMatrixSize(std::ifstream &f, FieldType fieldType, SymmetryType symmetryType) {
             MatrixSize matrixSize;
@@ -102,8 +122,8 @@ namespace Matrix {
 //            rowIndexTotal = matrixSize.NumberOfEntries * getDataTypeLengthForIndexing(matrixSize.Rows);
 //            colIndexTotal = numOfEntries * getDataTypeLengthForIndexing(matrixSize.Columns);
 //            rowIndexTotal = numOfEntries * getDataTypeLengthForIndexing(matrixSize.Rows);
-            matrixSize.ColumnIndexSizeInBytes = getDataTypeLengthForIndexing(matrixSize.Columns);
-            matrixSize.RowIndexSizeInBytes = getDataTypeLengthForIndexing(matrixSize.Rows);
+            matrixSize.ColumnIndexSizeInBytes = Utilities::GetDataTypeLengthForIndexing(matrixSize.Columns);
+            matrixSize.RowIndexSizeInBytes = Utilities::GetDataTypeLengthForIndexing(matrixSize.Rows);
             colIndexTotal = numOfEntries * matrixSize.ColumnIndexSizeInBytes;
             rowIndexTotal = numOfEntries * matrixSize.RowIndexSizeInBytes;
 
@@ -188,6 +208,9 @@ namespace Matrix {
             // For FieldType = Pattern, no value fields exist. All the coordinate values are assumed to be 1.
             MatrixData<Data<short>> matrixData;
 
+            Data <short> newCellData;
+            Data<short> symmetricCellData;
+
             // Read the data
             for (int line = 0; line < matrixSize.NumberOfEntries; line++)
             {
@@ -195,14 +218,14 @@ namespace Matrix {
                 f >> row >> column;
 
                 std::cout << "R: " << row << " - C: " << column << " - D: " << matrixCellData << std::endl;*/
-                Data <short> newCellData;
+//                Data <short> newCellData;
                 f >> newCellData.Row >> newCellData.Column;
                 newCellData.Value = 1;
                 matrixData.Coordinate.push_back(newCellData);
 
 //                std::cout << "R: " << newCellData.Row << " - C: " << newCellData.Column << " - D: " << newCellData.Value << std::endl;
                 if (symmetryType == Symmetric) {
-                    Data<short> symmetricCellData;
+//                    Data<short> symmetricCellData;
                     symmetricCellData.Row = newCellData.Column;
                     symmetricCellData.Column = newCellData.Row;
                     symmetricCellData.Value = newCellData.Value;
@@ -215,7 +238,7 @@ namespace Matrix {
         }
 
         template <typename T>
-        DataRange getDataRange(MatrixData<Data<T>> matrixData) {
+        DataRange getDataRange(MatrixData<Data<T>>& matrixData) {
             DataRange myRange;
 
             myRange.Maximum = matrixData.Coordinate[0].Value;
@@ -288,8 +311,13 @@ namespace Matrix {
 
     public:
         explicit MatrixMarketData(std::string FileName) {
+
+//            if (Constants::DisplayProgress) std::cout << FileName << " -> Loading...";
+
             fileName = FileName;
             readMatrix(FileName);
+
+//            if (Constants::DisplayProgress) std::cout << "Done";
         }
 
         MatrixCollection& GetMatrixDataCollection() {
@@ -307,6 +335,7 @@ namespace Matrix {
         ~MatrixMarketData(){
             // Destructor of the class
 //            std::cout << "MatrixMarketData destructor ...\n";
+//            if (Constants::DisplayProgress) std::cout << fileName << " Destroyed" << '\r';
         }
     };
 

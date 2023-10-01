@@ -13,4 +13,5 @@ add_executable(MatrixLoad main.cpp
         MatrixMarketData.cpp
         BitNumber.cpp
         SegmentedMatrixCSR.cpp
-        MatrixCSC.cpp)
+        MatrixCSC.cpp
+        SegmentedMatrixCSC.cpp)

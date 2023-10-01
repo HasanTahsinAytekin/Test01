@@ -149,7 +149,7 @@ class BitNumber {
         T numberToAnalyze;
 
         int numberOfBitsRequired(long long val) {
-            return (val>0) ? ceil(log2(val)) : (val == 0) ? 0 : ceil(log2(abs(val)));
+            return (val>0) ? ceil(log2(val)) : (val == 0) ? 0 : ceil(log2(std::abs(val)));
         }
 
         int numberOfBytesRequired(int numberOfBits) {

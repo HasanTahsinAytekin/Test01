@@ -1,10 +1,35 @@
 #include <iostream>
 #include <fstream>
 #include <filesystem>
+#include <ctime>
+#include <chrono>
 #include "GlobalDeclerations.h"
 #include "MatrixMarketData.h"
 #include "MatrixCSR.h"
 #include "SegmentedMatrixCSR.h"
+#include "MatrixCSC.h"
+#include "SegmentedMatrixCSC.h"
+
+
+
+/*
+int GetDataTypeLengthForIndexing(unsigned long aValue) {
+    if (aValue <= 65535) { // 2 bytes
+        return sizeof(unsigned short);
+    } else if (aValue <= 4294967295) { // 4 bytes
+        return sizeof(unsigned int);
+    } else if (aValue <= ((unsigned long)18446744073709551615)) { // 8 bytes
+        return sizeof(unsigned long);
+    }
+}
+*/
+//const bool DisplayResult = true;
+//const bool DisplayProgress = true;
+//double defaultSegmentSize = 65535; // double -> ceil function requires double
+
+
+
+
 
 std::string fieldTypeName(Matrix::FieldType fType) {
     switch (fType) {
@@ -81,18 +106,73 @@ std::string symmetryTypeName(Matrix::SymmetryType sType) {
 }
 
 void processFile(std::string filePath, std::string fileName, std::ofstream& outFile) {
+    time_t now = time(0); // get current date and time
+    tm* ltm = localtime(&now);
+
+    auto start{std::chrono::steady_clock::now()};
+
+    if (Constants::DisplayProgress) std::cout << fileName << " -> Loading...";
     auto mmData = new Matrix::MatrixMarketData(filePath);
-    auto mmMatrixCollection = mmData->GetMatrixDataCollection();
+    if (Constants::DisplayProgress) std::cout << "Done";
+
+    Matrix::MatrixSize matrixSize = mmData->GetMatrixSize();
+    auto& mmMatrixCollection = mmData->GetMatrixDataCollection();
+//    free(mmData);
+
 //    Matrix::ObjectType mmObjectType = mmMatrixCollection.matrix_header.Object;
 //    Matrix::FormatType mmFormatType = mmMatrixCollection.matrix_header.Format;
 //    Matrix::SymmetryType mmSymmetryType = mmMatrixCollection.matrix_header.Symmetry;
 //    Matrix::FieldType mmFieldType = mmMatrixCollection.matrix_header.Field;
     Matrix::DataRange mmDataRange = mmMatrixCollection.matrixDataCollection.type_data_range;
+    // CSR
     auto matrixCSR = new Matrix::MatrixCSR(mmMatrixCollection);
+    auto matrixCSRSizeInBytes = matrixCSR->GetMatrixSizeInBytes();
+    auto x = sizeof(matrixCSR);
+    delete matrixCSR;
+
     auto segmentedMatrixCSR = new Matrix::SegmentedMatrixCSR(mmMatrixCollection);
+    auto segmentedMatrixCSRSizeInBytes = segmentedMatrixCSR->GetMatrixSizeInBytes();
+    auto segmentedMatrixCSRSizeWithBitNumberInBytes = segmentedMatrixCSR->GetMatrixSizeWithBitNumberInBytes();
+    delete segmentedMatrixCSR;
 
-    Matrix::MatrixSize matrixSize = mmData->GetMatrixSize();
+    // CSC
+    auto matrixCSC = new Matrix::MatrixCSC(mmMatrixCollection);
+    auto matrixCSCSizeInBytes = matrixCSC->GetMatrixSizeInBytes();
+    delete matrixCSC;
 
+    auto segmentedMatrixCSC = new Matrix::SegmentedMatrixCSC(mmMatrixCollection);
+    auto segmentedMatrixCSCSizeInBytes = segmentedMatrixCSC->GetMatrixSizeInBytes();
+    auto segmentedMatrixCSCSizeWithBitNumberInBytes = segmentedMatrixCSC->GetMatrixSizeWithBitNumberInBytes();
+    delete segmentedMatrixCSC;
+
+    auto stop{std::chrono::steady_clock::now()};
+    auto time_diff = stop - start;
+    auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(time_diff);
+
+//    Matrix::MatrixSize matrixSize = mmData->GetMatrixSize();
+
+    if (Constants::DisplayResult)
+        std::cout << ltm->tm_hour << ":" << ltm->tm_min << ":" << ltm->tm_sec << " (" << elapsed.count()  << ") | " <<
+                  fileName <<
+                  " Obj: " << objectTypeName(mmMatrixCollection.matrix_header.Object) <<
+                  " Format: " << formatTypeName(mmMatrixCollection.matrix_header.Format) <<
+                  " Symm: " << symmetryTypeName(mmMatrixCollection.matrix_header.Symmetry) <<
+                  " Rows: " << matrixSize.Rows << " Cols: " << matrixSize.Columns << " NE: " << matrixSize.NumberOfEntries <<
+                  " FType: " << fieldTypeName(mmMatrixCollection.matrix_header.Field) <<
+                  " MinVal: " << mmDataRange.Minimum <<
+                  " MaxVal: " << mmDataRange.Maximum <<
+                  " Coor(RIB): " << matrixSize.RowIndexSizeInBytes <<
+                  " Coor(CIB): " << matrixSize.ColumnIndexSizeInBytes <<
+                  " Coor(VB): " << matrixSize.ValueSizeInBytes <<
+                  " Coor: " << matrixSize.SizeInBytes <<
+                  " CSR: " << matrixCSRSizeInBytes << // matrixCSR->GetMatrixSizeInBytes() <<
+                  " SCSR: " << segmentedMatrixCSRSizeInBytes << // segmentedMatrixCSR->GetMatrixSizeInBytes() <<
+                  " SCSR+: " << segmentedMatrixCSRSizeWithBitNumberInBytes << // segmentedMatrixCSR->GetMatrixSizeWithBitNumberInBytes() <<
+                  " CSC: " << matrixCSCSizeInBytes << // matrixCSC->GetMatrixSizeInBytes() <<
+                  " SCSC: " << segmentedMatrixCSCSizeInBytes << // segmentedMatrixCSC->GetMatrixSizeInBytes() <<
+                  " SCSC+: " << segmentedMatrixCSCSizeWithBitNumberInBytes << // segmentedMatrixCSC->GetMatrixSizeWithBitNumberInBytes() <<
+                  std::endl;
+/*
     std::cout << fileName <<
               " Object: " << objectTypeName(mmMatrixCollection.matrix_header.Object) <<
               " Format: " << formatTypeName(mmMatrixCollection.matrix_header.Format) <<
@@ -107,10 +187,16 @@ void processFile(std::string filePath, std::string fileName, std::ofstream& outF
               " Coordinate: " << matrixSize.SizeInBytes <<
               " CSR: " << matrixCSR->GetMatrixSizeInBytes() <<
               " SCSR: " << segmentedMatrixCSR->GetMatrixSizeInBytes() <<
-              " SCSR+: " << segmentedMatrixCSR->GetMatrixSizeWithBitNumberInBytes() << std::endl;
+              " SCSR+: " << segmentedMatrixCSR->GetMatrixSizeWithBitNumberInBytes() <<
+              " CSC: " << matrixCSC->GetMatrixSizeInBytes() <<
+              " SCSR: " << segmentedMatrixCSC->GetMatrixSizeInBytes() <<
+              " SCSR+: " << segmentedMatrixCSC->GetMatrixSizeWithBitNumberInBytes() << std::endl;
+*/
+
 
     // Also log the results into the benchmark results file
-    outFile << fileName <<
+    outFile << elapsed.count() <<
+              "; " << fileName <<
               "; " << objectTypeName(mmMatrixCollection.matrix_header.Object) <<
               "; " << formatTypeName(mmMatrixCollection.matrix_header.Format) <<
               "; " << symmetryTypeName(mmMatrixCollection.matrix_header.Symmetry) <<
@@ -122,13 +208,22 @@ void processFile(std::string filePath, std::string fileName, std::ofstream& outF
               "; " << matrixSize.ColumnIndexSizeInBytes <<
               "; " << matrixSize.ValueSizeInBytes <<
               "; " << matrixSize.SizeInBytes <<
-              "; " << matrixCSR->GetMatrixSizeInBytes() <<
-              "; " << segmentedMatrixCSR->GetMatrixSizeInBytes() <<
-              "; " << segmentedMatrixCSR->GetMatrixSizeWithBitNumberInBytes() << std::endl;
+              "; " << matrixCSRSizeInBytes << // matrixCSR->GetMatrixSizeInBytes() <<
+              "; " << segmentedMatrixCSRSizeInBytes << // segmentedMatrixCSR->GetMatrixSizeInBytes() <<
+              "; " << segmentedMatrixCSRSizeWithBitNumberInBytes << // segmentedMatrixCSR->GetMatrixSizeWithBitNumberInBytes() <<
+              "; " << matrixCSCSizeInBytes << // matrixCSC->GetMatrixSizeInBytes() <<
+              "; " << segmentedMatrixCSCSizeInBytes << // segmentedMatrixCSC->GetMatrixSizeInBytes() <<
+              "; " << segmentedMatrixCSCSizeWithBitNumberInBytes << // segmentedMatrixCSC->GetMatrixSizeWithBitNumberInBytes() <<
+              std::endl;
 
+    delete mmData;
+/*
     delete mmData;
     delete matrixCSR;
     delete segmentedMatrixCSR;
+    delete matrixCSC;
+    delete segmentedMatrixCSC;
+*/
 
 }
 
@@ -142,9 +237,17 @@ void processFiles() {
         if (fw.is_open())
         {
             // Print the header info into the benchmark results file
-            fw << "File; Object; Format; Symmetry; Rows; Columns; NonzeroEntries; FieldType; MinValue; MaxValue; Coordinate_RIB; Coordinate_CIB; Coordinate_VB; Coordinate_Bytes; CSR_Bytes; SCSR_Bytes; SCSR+_Bytes" << std::endl;
+            fw << "ElapsedS; File; Object; Format; Symmetry; Rows; Columns; NonzeroEntries; FieldType; MinValue; MaxValue; Coordinate_RIB; Coordinate_CIB; Coordinate_VB; Coordinate_Bytes; CSR_Bytes; SCSR_Bytes; SCSR+_Bytes; CSC_Bytes; SCSC_Bytes; SCSC+_Bytes" << std::endl;
 
-//            processFile("C:\\IntelliJProjects\\ssget\\Data\\bcsstk01.mtx", "bcsstk01.mtx", fw);
+/*
+            if (Constants::DisplayProgress) std::cout << "bcsstk01.mtx";
+            processFile("C:\\IntelliJProjects\\ssget\\Data\\bcsstk01.mtx", "bcsstk01.mtx", fw);
+*/
+//            processFile("C:\\IntelliJProjects\\ssget\\Data\\mycielskian17.mtx", "JP.mtx", fw);
+/*
+            if (Constants::DisplayProgress) std::cout << "mycielskian17.mtx";
+            processFile("C:\\IntelliJProjects\\ssget\\Data\\mycielskian17.mtx", "mycielskian17.mtx", fw);
+*/
 
             for( const auto & entry : std::filesystem::directory_iterator( path_to_dir ) ) {
                 processFile(entry.path().string(), entry.path().filename().string(), fw);

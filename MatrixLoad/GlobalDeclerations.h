@@ -109,6 +109,7 @@ namespace Matrix {
         MatrixSize matrix_size;
     };
 
+    // For Compressed Row
     template<typename T>
     struct MatrixCompression_CSR {
         std::vector<T> Values;
@@ -194,12 +195,98 @@ namespace Matrix {
         MatrixCompression_SCSR_Size CSSR_Structure_Size;
     };
 
+    // For Compressed Column
+    template<typename T>
+    struct MatrixCompression_CSC {
+        std::vector<T> Values;
+        std::vector<long long int> RowIndexes;
+        std::vector<long long int> ColumnSeparators;
+    };
+
+    struct MatrixCompression_CSC_DataCollection{
+        MatrixCompression_CSC<short> type_pattern;
+        MatrixCompression_CSC<float> type_float;
+        MatrixCompression_CSC<double> type_double;
+        MatrixCompression_CSC<int> type_int;
+    };
+
+    struct MatrixCompression_CSC_Size {
+        long long int ValuesArraySizeInBytes;
+        long long int RowIndexesArraySizeInBytes;
+        long long int ColumnSeparatorsArraySizeInBytes;
+        long long int CSCSizeInBytes;
+        long long int SCSCSizeInBytes;
+    };
+
+    struct MatrixCompression_CSC_Collection{
+        MatrixCompression_CSC_DataCollection CSC_DataCollection;
+        MatrixCompression_CSC_Size CSC_Structure_Size;
+    };
+
     struct NumberAnalysis{
         int NumberOfBits;
         int NumberOfBytes;
         bool Recast;
     };
 
+    template<typename T>
+    struct MatrixCompression_SCSC {
+        std::vector<T> Values;
+        std::vector<short> RowIndexes;
+        std::vector<short> ColumnSeperators;
+    };
 
+    struct MatrixCompression_SCSC_DataCollection{
+        MatrixCompression_SCSC<short> type_pattern;
+        MatrixCompression_SCSC<float> type_float;
+        MatrixCompression_SCSC<double> type_double;
+        MatrixCompression_SCSC<int> type_int;
+    };
+
+    struct MatrixCompression_SCSC_Size {
+        long long int ValuesArraySizeInBytes;
+        long long int RowIndexesArraySizeInBytes;
+        long long int ColumnSeperatorsArraySizeInBytes;
+        long long int SCSCSizeInBytes;
+    };
+
+    struct MatrixCompression_SCSC_Collection{
+        MatrixCompression_SCSC_DataCollection SCSC_DataCollection;
+        MatrixCompression_SCSC_Size CSSC_Structure_Size;
+    };
+/*
+    int GetDataTypeLengthForIndexing(unsigned long aValue) {
+        if (aValue <= 65535) { // 2 bytes
+            return sizeof(unsigned short);
+        } else if (aValue <= 4294967295) { // 4 bytes
+            return sizeof(unsigned int);
+        } else if (aValue <= ((unsigned long)18446744073709551615)) { // 8 bytes
+            return sizeof(unsigned long);
+        }
+    }
+    const bool DisplayResult = true;
+    const bool DisplayProgress = true;
+    double defaultSegmentSize = 65535; // double -> ceil function requires double
+*/
 }
+
+namespace Constants {
+    const bool DisplayResult = true;
+    const bool DisplayProgress = true;
+    const double DefaultSegmentSize = 65535; // double -> ceil function requires double
+//    const unsigned long MaxUnsignedNumber8Bytes = 18446744073709551615ul;
+}
+
+namespace Utilities {
+    static int GetDataTypeLengthForIndexing(unsigned long aValue) {
+        if (aValue <= 65535) { // 2 bytes
+            return sizeof(unsigned short);
+        } else if (aValue <= 4294967295) { // 4 bytes
+            return sizeof(unsigned int);
+        } else if (aValue <= ((unsigned long)18446744073709551615)) { // 8 bytes
+            return sizeof(unsigned long);
+        }
+    }
+}
+
 #endif //MATRIXMARKETDATA_GLOBALDECLERATIONS_H

@@ -3,3 +3,6 @@
 //
 
 #include "MatrixCSR.h"
+
+namespace Matrix {
+} // Matrix

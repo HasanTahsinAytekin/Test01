@@ -1,21 +1,21 @@
 //
-// Created by Hasan Aytekin on 23.07.2023.
+// Created by Hasan Aytekin on 9.08.2023.
 //
 
-#ifndef MATRIXMARKETDATA_SEGMENTEDMATRIXCSR_H
-#define MATRIXMARKETDATA_SEGMENTEDMATRIXCSR_H
+#ifndef MATRIXLOAD_SEGMENTEDMATRIXCSC_H
+#define MATRIXLOAD_SEGMENTEDMATRIXCSC_H
 
-#include "MatrixCSR.h"
+#include "MatrixCSC.h"
 
 namespace Matrix {
 
-    class SegmentedMatrixCSR {
+    class SegmentedMatrixCSC {
         std::vector<Segment> segments;
 
     private:
-        MatrixCompression_SCSR_Collection scsrCollection;
-        unsigned long totalCSRSizeOfSegmentsInBytes;
-        unsigned long totalCSRSizeOfSegmentsWithBitNumberInBytes;
+        MatrixCompression_SCSC_Collection scscCollection;
+        unsigned long totalCSCSizeOfSegmentsInBytes;
+        unsigned long totalCSCSizeOfSegmentsWithBitNumberInBytes;
 
         template <typename T>
         MatrixData<Data<T>> constructSegmentMatrix(MatrixData<Data<T>>& matrixDataC, SegmentRange rowRange, SegmentRange colRange) {
@@ -37,9 +37,7 @@ namespace Matrix {
             return matrixData;
         }
 
-//        std::vector<Segment> constructSegmentedMatrices(MatrixCollection& matrixCollection) {
         void constructSegmentedMatrices(MatrixCollection& matrixCollection) {
-//            std::vector<Segment> segments;
             unsigned int numberOfRowSegments;
             unsigned int numberOfColSegments;
             unsigned int totalNumberOfEntries = 0;
@@ -60,8 +58,6 @@ namespace Matrix {
                     int numberOfColsToProcess;
                     SegmentRange segmentColRange;
                     MatrixDataCollection dataCollection;
-
-//                    if (Constants::DisplayProgress) std::cout << " -> segment(" << segmentRow << ", " << segmentCol << ")";
 
                     segmentColRange.Start = segmentCol * Constants::DefaultSegmentSize + 1; // 1 Based
 
@@ -110,67 +106,64 @@ namespace Matrix {
                     segments.push_back(aSegment);
                 }
             }
-//            return segments;
         }
 
     public:
-        SegmentedMatrixCSR(MatrixCollection& coordinateMatrixCollection) {
+        SegmentedMatrixCSC(MatrixCollection& coordinateMatrixCollection) {
 
-            if (Constants::DisplayProgress) std::cout << " -> Compressing Segmented RowWise...";
+            if (Constants::DisplayProgress) std::cout << " -> Compressing Segmented ColumnWise...";
 
             constructSegmentedMatrices(coordinateMatrixCollection);
 
-            // Obtain the CSR representation of each segment
-            unsigned long int totalCSRSizeOfSegmentsInBytes = 0;
-            unsigned long int totalCSRSizeOfSegmentsWithBitNumberInBytes = 0;
+            // Obtain the CSC representation of each segment
+            unsigned long int totalCSCSizeOfSegmentsInBytes = 0;
+            unsigned long int totalCSCSizeOfSegmentsWithBitNumberInBytes = 0;
 
             for (Segment segment: segments) {
-                auto matrixCSR = new MatrixCSR(segment);
-                totalCSRSizeOfSegmentsInBytes += matrixCSR->GetMatrixSizeInBytes();
-                totalCSRSizeOfSegmentsWithBitNumberInBytes += matrixCSR->GetSegmentedMatrixSizeWithBitNumberInBytes();
-                delete matrixCSR;
-//                free(matrixCSR);
+                auto matrixCSC = new MatrixCSC(segment);
+                totalCSCSizeOfSegmentsInBytes += matrixCSC->GetMatrixSizeInBytes();
+                totalCSCSizeOfSegmentsWithBitNumberInBytes += matrixCSC->GetSegmentedMatrixSizeWithBitNumberInBytes();
+                delete matrixCSC;
             }
 
-            this->totalCSRSizeOfSegmentsInBytes = totalCSRSizeOfSegmentsInBytes;
-            this->totalCSRSizeOfSegmentsWithBitNumberInBytes = totalCSRSizeOfSegmentsWithBitNumberInBytes;
+            this->totalCSCSizeOfSegmentsInBytes = totalCSCSizeOfSegmentsInBytes;
+            this->totalCSCSizeOfSegmentsWithBitNumberInBytes = totalCSCSizeOfSegmentsWithBitNumberInBytes;
 
-            if (Constants::DisplayProgress) std::cout << "Done";
+            if (Constants::DisplayProgress) std::cout << "Done" << '\r';
         }
 
         unsigned long GetMatrixSizeInBytes() {
-            return this->totalCSRSizeOfSegmentsInBytes;
+            return this->totalCSCSizeOfSegmentsInBytes;
         }
 
         unsigned long GetMatrixSizeWithBitNumberInBytes() {
-            return this->totalCSRSizeOfSegmentsWithBitNumberInBytes;
+            return this->totalCSCSizeOfSegmentsWithBitNumberInBytes;
         }
 
-        ~SegmentedMatrixCSR() {
+        ~SegmentedMatrixCSC() {
             // Destructor of the class
             this->segments.clear();
             //
-            this->scsrCollection.SCSR_DataCollection.type_pattern.Values.clear();
-            this->scsrCollection.SCSR_DataCollection.type_pattern.ColumnIndexes.clear();
-            this->scsrCollection.SCSR_DataCollection.type_pattern.RowSeperators.clear();
+            this->scscCollection.SCSC_DataCollection.type_pattern.Values.clear();
+            this->scscCollection.SCSC_DataCollection.type_pattern.RowIndexes.clear();
+            this->scscCollection.SCSC_DataCollection.type_pattern.ColumnSeperators.clear();
             //
-            this->scsrCollection.SCSR_DataCollection.type_double.Values.clear();
-            this->scsrCollection.SCSR_DataCollection.type_double.ColumnIndexes.clear();
-            this->scsrCollection.SCSR_DataCollection.type_double.RowSeperators.clear();
+            this->scscCollection.SCSC_DataCollection.type_double.Values.clear();
+            this->scscCollection.SCSC_DataCollection.type_double.RowIndexes.clear();
+            this->scscCollection.SCSC_DataCollection.type_double.ColumnSeperators.clear();
             //
-            this->scsrCollection.SCSR_DataCollection.type_float.Values.clear();
-            this->scsrCollection.SCSR_DataCollection.type_float.ColumnIndexes.clear();
-            this->scsrCollection.SCSR_DataCollection.type_float.RowSeperators.clear();
+            this->scscCollection.SCSC_DataCollection.type_float.Values.clear();
+            this->scscCollection.SCSC_DataCollection.type_float.RowIndexes.clear();
+            this->scscCollection.SCSC_DataCollection.type_float.ColumnSeperators.clear();
             //
-            this->scsrCollection.SCSR_DataCollection.type_int.Values.clear();
-            this->scsrCollection.SCSR_DataCollection.type_int.ColumnIndexes.clear();
-            this->scsrCollection.SCSR_DataCollection.type_int.RowSeperators.clear();
+            this->scscCollection.SCSC_DataCollection.type_int.Values.clear();
+            this->scscCollection.SCSC_DataCollection.type_int.RowIndexes.clear();
+            this->scscCollection.SCSC_DataCollection.type_int.ColumnSeperators.clear();
 
 //            std::cout << "SegmentedMatrixCSR destructor ...\n";
         }
-
     };
 
 } // Matrix
 
-#endif //MATRIXMARKETDATA_SEGMENTEDMATRIXCSR_H
+#endif //MATRIXLOAD_SEGMENTEDMATRIXCSC_H

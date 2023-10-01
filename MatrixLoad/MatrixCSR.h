@@ -4,6 +4,7 @@
 
 #ifndef MATRIXMARKETDATA_MATRIXCSR_H
 #define MATRIXMARKETDATA_MATRIXCSR_H
+
 #include <algorithm>
 #include "GlobalDeclerations.h"
 #include "BitNumber.h"
@@ -33,14 +34,28 @@ namespace Matrix {
     }
 
     class MatrixCSR {
+
+/*
+        int GetDataTypeLengthForIndexing(unsigned long aValue) {
+            if (aValue <= 65535) { // 2 bytes
+                return sizeof(unsigned short);
+            } else if (aValue <= 4294967295) { // 4 bytes
+                return sizeof(unsigned int);
+            } else if (aValue <= ((unsigned long)18446744073709551615)) { // 8 bytes
+                return sizeof(unsigned long);
+            }
+        }
+*/
+//        const bool DisplayResult = true;
+//        const bool DisplayProgress = true;
+//        double defaultSegmentSize = 65535; // double -> ceil function requires double
+
     private:
         MatrixCompression_CSR_Collection matrixCompression_CSR_Collection;
 
         template<typename T>
-        MatrixCompression_CSR<T> compressMatrixToCSR(MatrixData<Data<T>> matrixData) {
+        MatrixCompression_CSR<T> compressMatrixToCSR(MatrixData<Data<T>>& matrixData) {
             MatrixCompression_CSR<T> matrix_csr;
-//            std::int64_t current_row = 0;
-//            std::int64_t num_of_values_for_current_row = 0;
             long long int current_row = 0;
             long long int num_of_values_for_current_row = 0;
 
@@ -49,19 +64,14 @@ namespace Matrix {
 
             for(Data<T> data: matrixData.Coordinate) {
                 // Check if we are dealing with a new row
-
                 if ((data.Row-1) != current_row) { // Convert row index to base 0
                     // Store the current num_of_values_for_current_row into the RowSeperators vector
                     matrix_csr.RowSeperators.push_back(num_of_values_for_current_row);
                     // Set the new row to <this> row, DO NOT set the num_of_values_for_current_row to 0
                     current_row = data.Row - 1;
-                    // num_of_values_for_current_row = 0;
                 }
                 matrix_csr.Values.push_back(data.Value);
-//                if (data.Column == 0) {
-//                    int yy = 0;
-//                }
-//                matrix_csr.ColumnIndexes.push_back(data.Column - 1); // Convert column index into base 0
+
                 matrix_csr.ColumnIndexes.push_back(data.Column);
                 // OK. We inserted a value.
                 // Increment the count of values by 1;
@@ -75,40 +85,21 @@ namespace Matrix {
             return matrix_csr;
         }
 
-        int getDataTypeLengthForIndexing(unsigned long aValue) {
-            if (aValue <= 65535) { // 2 bytes
-                return sizeof(unsigned short);
-            } else if (aValue <= 4294967295) { // 4 bytes
-                return sizeof(unsigned int);
-            } else if (aValue <= ((unsigned long)18446744073709551615)) { // 8 bytes
-                return sizeof(unsigned long);
-            }
-        }
-
         MatrixCompression_CSR_Collection processMatrixData(MatrixCollection& coordinateMatrixCollection) {
-////            MatrixCompression_CSR<T> matrix_csr;
-//            MatrixCompression_CSR_DataCollection matrix_csr_collection;
-//            MatrixCompression_CSR_Size matrix_csr_size;
             MatrixCompression_CSR_Collection matrix_csr_collection;
 
-//            int sizeOfIndexField = getDataTypeLengthForIndexing(coordinateMatrixCollection.matrix_size.NumberOfEntries);
-            int sizeOfIndexFieldColumn = getDataTypeLengthForIndexing(coordinateMatrixCollection.matrix_size.Columns);
-            int sizeOfIndexFieldRowSeparator = getDataTypeLengthForIndexing(coordinateMatrixCollection.matrix_size.NumberOfEntries);
-            int sizeOfValueField = getDataTypeLengthForIndexing((long)coordinateMatrixCollection.matrixDataCollection.type_data_range.Maximum);
+            int sizeOfIndexFieldColumn = Utilities::GetDataTypeLengthForIndexing(coordinateMatrixCollection.matrix_size.Columns);
+            int sizeOfIndexFieldRowSeparator = Utilities::GetDataTypeLengthForIndexing(coordinateMatrixCollection.matrix_size.NumberOfEntries);
+            int sizeOfValueField = Utilities::GetDataTypeLengthForIndexing((long)coordinateMatrixCollection.matrixDataCollection.type_data_range.Maximum);
             long SCSRSizeInBytes;
 
             switch (coordinateMatrixCollection.matrix_header.Field) {
                 case Real:
-//                    BitNumber rowIndexSizeInfo = new BitNumber<int>(matrix_csr_collection.CSR_DataCollection.type_float.ColumnIndexes.size());
-//                    BitNumber columnIndexSizeInfo = new BitNumber<int>(matrix_csr_collection.CSR_DataCollection.type_float.RowSeperators.size());
-
                     std::sort(coordinateMatrixCollection.matrixDataCollection.type_float.Coordinate.begin(),
                               coordinateMatrixCollection.matrixDataCollection.type_float.Coordinate.end(),
                               compareCoordinateRows<float>);
                     matrix_csr_collection.CSR_DataCollection.type_float = compressMatrixToCSR<float>(coordinateMatrixCollection.matrixDataCollection.type_float);
                     matrix_csr_collection.CSR_Structure_Size.ValuesArraySizeInBytes = sizeof(float) * matrix_csr_collection.CSR_DataCollection.type_float.Values.size();
-//                    matrix_csr_collection.CSR_Structure_Size.ColumnIndexesArraySizeInBytes = sizeof(int) * matrix_csr_collection.CSR_DataCollection.type_float.ColumnIndexes.size();
-//                    matrix_csr_collection.CSR_Structure_Size.RowSeperatorsArraySizeInBytes = sizeof(int) * matrix_csr_collection.CSR_DataCollection.type_float.RowSeperators.size();
                     matrix_csr_collection.CSR_Structure_Size.ColumnIndexesArraySizeInBytes = sizeOfIndexFieldColumn * matrix_csr_collection.CSR_DataCollection.type_float.ColumnIndexes.size();
                     matrix_csr_collection.CSR_Structure_Size.RowSeperatorsArraySizeInBytes = sizeOfIndexFieldRowSeparator * matrix_csr_collection.CSR_DataCollection.type_float.RowSeperators.size();
                     SCSRSizeInBytes = sizeOfValueField * matrix_csr_collection.CSR_DataCollection.type_float.Values.size();
@@ -119,8 +110,6 @@ namespace Matrix {
                               compareCoordinateRows<double>);
                     matrix_csr_collection.CSR_DataCollection.type_double = compressMatrixToCSR<double>(coordinateMatrixCollection.matrixDataCollection.type_double);
                     matrix_csr_collection.CSR_Structure_Size.ValuesArraySizeInBytes = sizeof(double) * matrix_csr_collection.CSR_DataCollection.type_double.Values.size();
-//                    matrix_csr_collection.CSR_Structure_Size.ColumnIndexesArraySizeInBytes = sizeof(int) * matrix_csr_collection.CSR_DataCollection.type_double.ColumnIndexes.size();
-//                    matrix_csr_collection.CSR_Structure_Size.RowSeperatorsArraySizeInBytes = sizeof(int) * matrix_csr_collection.CSR_DataCollection.type_double.RowSeperators.size();
                     matrix_csr_collection.CSR_Structure_Size.ColumnIndexesArraySizeInBytes = sizeOfIndexFieldColumn * matrix_csr_collection.CSR_DataCollection.type_double.ColumnIndexes.size();
                     matrix_csr_collection.CSR_Structure_Size.RowSeperatorsArraySizeInBytes = sizeOfIndexFieldRowSeparator * matrix_csr_collection.CSR_DataCollection.type_double.RowSeperators.size();
                     SCSRSizeInBytes = sizeOfValueField * matrix_csr_collection.CSR_DataCollection.type_double.Values.size();
@@ -134,8 +123,6 @@ namespace Matrix {
                               compareCoordinateRows<int>);
                     matrix_csr_collection.CSR_DataCollection.type_int = compressMatrixToCSR<int>(coordinateMatrixCollection.matrixDataCollection.type_int);
                     matrix_csr_collection.CSR_Structure_Size.ValuesArraySizeInBytes = sizeof(int) * matrix_csr_collection.CSR_DataCollection.type_int.Values.size();
-//                    matrix_csr_collection.CSR_Structure_Size.ColumnIndexesArraySizeInBytes = sizeof(int) * matrix_csr_collection.CSR_DataCollection.type_int.ColumnIndexes.size();
-//                    matrix_csr_collection.CSR_Structure_Size.RowSeperatorsArraySizeInBytes = sizeof(int) * matrix_csr_collection.CSR_DataCollection.type_int.RowSeperators.size();
                     matrix_csr_collection.CSR_Structure_Size.ColumnIndexesArraySizeInBytes = sizeOfIndexFieldColumn * matrix_csr_collection.CSR_DataCollection.type_int.ColumnIndexes.size();
                     matrix_csr_collection.CSR_Structure_Size.RowSeperatorsArraySizeInBytes = sizeOfIndexFieldRowSeparator * matrix_csr_collection.CSR_DataCollection.type_int.RowSeperators.size();
                     SCSRSizeInBytes = sizeOfValueField * matrix_csr_collection.CSR_DataCollection.type_int.Values.size();
@@ -146,8 +133,6 @@ namespace Matrix {
                               compareCoordinateRows<short>);
                     matrix_csr_collection.CSR_DataCollection.type_pattern = compressMatrixToCSR<short>(coordinateMatrixCollection.matrixDataCollection.type_pattern);
                     matrix_csr_collection.CSR_Structure_Size.ValuesArraySizeInBytes = sizeof(short) * matrix_csr_collection.CSR_DataCollection.type_pattern.Values.size();
-//                    matrix_csr_collection.CSR_Structure_Size.ColumnIndexesArraySizeInBytes = sizeof(int) * matrix_csr_collection.CSR_DataCollection.type_pattern.ColumnIndexes.size();
-//                    matrix_csr_collection.CSR_Structure_Size.RowSeperatorsArraySizeInBytes = sizeof(int) * matrix_csr_collection.CSR_DataCollection.type_pattern.RowSeperators.size();
                     matrix_csr_collection.CSR_Structure_Size.ColumnIndexesArraySizeInBytes = sizeOfIndexFieldColumn * matrix_csr_collection.CSR_DataCollection.type_pattern.ColumnIndexes.size();
                     matrix_csr_collection.CSR_Structure_Size.RowSeperatorsArraySizeInBytes = sizeOfIndexFieldRowSeparator * matrix_csr_collection.CSR_DataCollection.type_pattern.RowSeperators.size();
                     SCSRSizeInBytes = sizeOfValueField * matrix_csr_collection.CSR_DataCollection.type_pattern.Values.size();
@@ -169,8 +154,7 @@ namespace Matrix {
 
             auto valueField = new BitNumber<long long>((long long) segmentedCoordinateMatrixCollection.type_data_range.Maximum);
             int sizeOfValueField = valueField->numberAnalysisResult.NumberOfBytes;
-//            int sizeOfValueField = getDataTypeLengthForIndexing((long) segmentedCoordinateMatrixCollection.type_data_range.Maximum);
-//            sizeOfValueField = valueField->numberAnalysisResult.NumberOfBytes;
+            delete valueField;
 
             long SCSRSizeInBytes;
 
@@ -228,19 +212,14 @@ namespace Matrix {
 
             return matrix_csr_collection;
         }
-    public:
-/*
-        MatrixCSR(MatrixData<Data<T>> coordinateMatrix) {
-            Data<int> x = {0, 1, 2};
-            coordinateMatrixCollection.matrixDataCollection.type_int.Coordinate.push_back(x);
-            processMatrixData(coordinateMatrix);
-        }
-*/
 
+    public:
         MatrixCSR(MatrixCollection& coordinateMatrixCollection) {
-//            Data<int> x = {0, 1, 2};
-//            coordinateMatrixCollection.matrixDataCollection.type_int.Coordinate.push_back(x);
+            if (Constants::DisplayProgress) std::cout << " -> Compressing RowWise...";
+
             matrixCompression_CSR_Collection = processMatrixData(coordinateMatrixCollection);
+
+            if (Constants::DisplayProgress) std::cout << "Done";
         }
 
         MatrixCSR(Segment& coordinateMatrixCollection) {
@@ -261,6 +240,22 @@ namespace Matrix {
 
         virtual ~MatrixCSR() {
             // Destructor of the class
+            this->matrixCompression_CSR_Collection.CSR_DataCollection.type_int.Values.clear();
+            this->matrixCompression_CSR_Collection.CSR_DataCollection.type_int.RowSeperators.clear();
+            this->matrixCompression_CSR_Collection.CSR_DataCollection.type_int.ColumnIndexes.clear();
+            //
+            this->matrixCompression_CSR_Collection.CSR_DataCollection.type_float.Values.clear();
+            this->matrixCompression_CSR_Collection.CSR_DataCollection.type_float.RowSeperators.clear();
+            this->matrixCompression_CSR_Collection.CSR_DataCollection.type_float.ColumnIndexes.clear();
+            //
+            this->matrixCompression_CSR_Collection.CSR_DataCollection.type_double.Values.clear();
+            this->matrixCompression_CSR_Collection.CSR_DataCollection.type_double.RowSeperators.clear();
+            this->matrixCompression_CSR_Collection.CSR_DataCollection.type_double.ColumnIndexes.clear();
+            //
+            this->matrixCompression_CSR_Collection.CSR_DataCollection.type_pattern.Values.clear();
+            this->matrixCompression_CSR_Collection.CSR_DataCollection.type_pattern.RowSeperators.clear();
+            this->matrixCompression_CSR_Collection.CSR_DataCollection.type_pattern.ColumnIndexes.clear();
+
 //            std::cout << "MatrixCSR destructor ...\n";
         }
     };
