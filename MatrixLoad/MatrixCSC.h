@@ -11,6 +11,7 @@
 
 namespace Matrix {
 
+/*
     // Compares two Data structures by row and column values.
     template<typename T>
     bool compareCoordinateColumns(const Data<T>& d1, const Data<T>& d2)
@@ -32,6 +33,7 @@ namespace Matrix {
             return false;
         }
     }
+*/
 
     class MatrixCSC {
 
@@ -95,9 +97,11 @@ namespace Matrix {
 
             switch (coordinateMatrixCollection.matrix_header.Field) {
                 case Real:
+/*
                     std::sort(coordinateMatrixCollection.matrixDataCollection.type_float.Coordinate.begin(),
                               coordinateMatrixCollection.matrixDataCollection.type_float.Coordinate.end(),
                               compareCoordinateColumns<float>);
+*/
                     matrix_csc_collection.CSC_DataCollection.type_float = compressMatrixToCSC<float>(coordinateMatrixCollection.matrixDataCollection.type_float);
                     matrix_csc_collection.CSC_Structure_Size.ValuesArraySizeInBytes = sizeof(float) * matrix_csc_collection.CSC_DataCollection.type_float.Values.size();
                     matrix_csc_collection.CSC_Structure_Size.RowIndexesArraySizeInBytes = sizeOfIndexFieldRow * matrix_csc_collection.CSC_DataCollection.type_float.RowIndexes.size();
@@ -105,9 +109,11 @@ namespace Matrix {
                     SCSCSizeInBytes = sizeOfValueField * matrix_csc_collection.CSC_DataCollection.type_float.Values.size();
                     break;
                 case Double:
+/*
                     std::sort(coordinateMatrixCollection.matrixDataCollection.type_double.Coordinate.begin(),
                               coordinateMatrixCollection.matrixDataCollection.type_double.Coordinate.end(),
                               compareCoordinateColumns<double>);
+*/
                     matrix_csc_collection.CSC_DataCollection.type_double = compressMatrixToCSC<double>(coordinateMatrixCollection.matrixDataCollection.type_double);
                     matrix_csc_collection.CSC_Structure_Size.ValuesArraySizeInBytes = sizeof(double) * matrix_csc_collection.CSC_DataCollection.type_double.Values.size();
                     matrix_csc_collection.CSC_Structure_Size.RowIndexesArraySizeInBytes = sizeOfIndexFieldRow * matrix_csc_collection.CSC_DataCollection.type_double.RowIndexes.size();
@@ -118,9 +124,11 @@ namespace Matrix {
                     SCSCSizeInBytes = 0;;
                     break;
                 case Integer:
+/*
                     std::sort(coordinateMatrixCollection.matrixDataCollection.type_int.Coordinate.begin(),
                               coordinateMatrixCollection.matrixDataCollection.type_int.Coordinate.end(),
                               compareCoordinateColumns<int>);
+*/
                     matrix_csc_collection.CSC_DataCollection.type_int = compressMatrixToCSC<int>(coordinateMatrixCollection.matrixDataCollection.type_int);
                     matrix_csc_collection.CSC_Structure_Size.ValuesArraySizeInBytes = sizeof(int) * matrix_csc_collection.CSC_DataCollection.type_int.Values.size();
                     matrix_csc_collection.CSC_Structure_Size.RowIndexesArraySizeInBytes = sizeOfIndexFieldRow * matrix_csc_collection.CSC_DataCollection.type_int.RowIndexes.size();
@@ -128,9 +136,11 @@ namespace Matrix {
                     SCSCSizeInBytes = sizeOfValueField * matrix_csc_collection.CSC_DataCollection.type_int.Values.size();
                     break;
                 case Pattern:
+/*
                     std::sort(coordinateMatrixCollection.matrixDataCollection.type_pattern.Coordinate.begin(),
                               coordinateMatrixCollection.matrixDataCollection.type_pattern.Coordinate.end(),
                               compareCoordinateColumns<short>);
+*/
                     matrix_csc_collection.CSC_DataCollection.type_pattern = compressMatrixToCSC<short>(coordinateMatrixCollection.matrixDataCollection.type_pattern);
                     matrix_csc_collection.CSC_Structure_Size.ValuesArraySizeInBytes = sizeof(short) * matrix_csc_collection.CSC_DataCollection.type_pattern.Values.size();
                     matrix_csc_collection.CSC_Structure_Size.RowIndexesArraySizeInBytes = sizeOfIndexFieldRow * matrix_csc_collection.CSC_DataCollection.type_pattern.RowIndexes.size();
@@ -160,9 +170,11 @@ namespace Matrix {
 
             switch (segmentedCoordinateMatrixCollection.segmentDataType) {
                 case Real:
+/*
                     std::sort(segmentedCoordinateMatrixCollection.segmentCollection.type_float.Coordinate.begin(),
                               segmentedCoordinateMatrixCollection.segmentCollection.type_float.Coordinate.end(),
                               compareCoordinateColumns<float>);
+*/
                     matrix_csc_collection.CSC_DataCollection.type_float = compressMatrixToCSC<float>(segmentedCoordinateMatrixCollection.segmentCollection.type_float);
                     matrix_csc_collection.CSC_Structure_Size.ValuesArraySizeInBytes = sizeof(float) * matrix_csc_collection.CSC_DataCollection.type_float.Values.size();
                     matrix_csc_collection.CSC_Structure_Size.RowIndexesArraySizeInBytes = sizeof(short) * matrix_csc_collection.CSC_DataCollection.type_float.RowIndexes.size();
@@ -170,9 +182,11 @@ namespace Matrix {
                     SCSCSizeInBytes = std::min(sizeOfValueField, (int)sizeof(float)) * matrix_csc_collection.CSC_DataCollection.type_float.Values.size();
                     break;
                 case Double:
+/*
                     std::sort(segmentedCoordinateMatrixCollection.segmentCollection.type_double.Coordinate.begin(),
                               segmentedCoordinateMatrixCollection.segmentCollection.type_double.Coordinate.end(),
                               compareCoordinateColumns<double>);
+*/
                     matrix_csc_collection.CSC_DataCollection.type_double = compressMatrixToCSC<double>(segmentedCoordinateMatrixCollection.segmentCollection.type_double);
                     matrix_csc_collection.CSC_Structure_Size.ValuesArraySizeInBytes = sizeof(double) * matrix_csc_collection.CSC_DataCollection.type_double.Values.size();
                     matrix_csc_collection.CSC_Structure_Size.RowIndexesArraySizeInBytes = sizeof(short) * matrix_csc_collection.CSC_DataCollection.type_double.RowIndexes.size();
@@ -183,9 +197,11 @@ namespace Matrix {
                     SCSCSizeInBytes = 0;
                     break;
                 case Integer:
+/*
                     std::sort(segmentedCoordinateMatrixCollection.segmentCollection.type_int.Coordinate.begin(),
                               segmentedCoordinateMatrixCollection.segmentCollection.type_int.Coordinate.end(),
                               compareCoordinateColumns<int>);
+*/
                     matrix_csc_collection.CSC_DataCollection.type_int = compressMatrixToCSC<int>(segmentedCoordinateMatrixCollection.segmentCollection.type_int);
                     matrix_csc_collection.CSC_Structure_Size.ValuesArraySizeInBytes = sizeof(int) * matrix_csc_collection.CSC_DataCollection.type_int.Values.size();
                     matrix_csc_collection.CSC_Structure_Size.RowIndexesArraySizeInBytes = sizeof(short) * matrix_csc_collection.CSC_DataCollection.type_int.RowIndexes.size();
@@ -193,9 +209,11 @@ namespace Matrix {
                     SCSCSizeInBytes = std::min(sizeOfValueField, (int)sizeof(int)) * matrix_csc_collection.CSC_DataCollection.type_int.Values.size();
                     break;
                 case Pattern:
+/*
                     std::sort(segmentedCoordinateMatrixCollection.segmentCollection.type_pattern.Coordinate.begin(),
                               segmentedCoordinateMatrixCollection.segmentCollection.type_pattern.Coordinate.end(),
                               compareCoordinateColumns<short>);
+*/
                     matrix_csc_collection.CSC_DataCollection.type_pattern = compressMatrixToCSC<short>(segmentedCoordinateMatrixCollection.segmentCollection.type_pattern);
                     matrix_csc_collection.CSC_Structure_Size.ValuesArraySizeInBytes = sizeof(short) * matrix_csc_collection.CSC_DataCollection.type_pattern.Values.size();
                     matrix_csc_collection.CSC_Structure_Size.RowIndexesArraySizeInBytes = sizeof(short) * matrix_csc_collection.CSC_DataCollection.type_pattern.RowIndexes.size();

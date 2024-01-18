@@ -161,6 +161,7 @@ namespace Matrix {
         SegmentRange segmentRangeColumn;
         DataRange type_data_range;
         MatrixDataCollection segmentCollection;
+        MatrixCompression_CSR_Collection segmented_CSR_Collection;
     };
 
     template<typename T>
@@ -177,6 +178,11 @@ namespace Matrix {
         MatrixCompression_SCSR<int> type_int;
     };
 
+    struct MatrixCompression_SCSR_Map {
+        long long int NumberOfRowSegments;
+        long long int NumberOfColSegments;
+        FieldType SCSRFieldType;
+    };
     struct MatrixCompression_SCSR_Size {
 /*
         std::int64_t ValuesArraySizeInBytes;
@@ -188,11 +194,12 @@ namespace Matrix {
         long long int ColumnIndexesArraySizeInBytes;
         long long int RowSeperatorsArraySizeInBytes;
         long long int SCSRSizeInBytes;
+        MatrixCompression_SCSR_Map SCSRMap;
     };
 
     struct MatrixCompression_SCSR_Collection{
         MatrixCompression_SCSR_DataCollection SCSR_DataCollection;
-        MatrixCompression_SCSR_Size CSSR_Structure_Size;
+        MatrixCompression_SCSR_Size SCSR_Structure_Size;
     };
 
     // For Compressed Column
@@ -250,9 +257,14 @@ namespace Matrix {
         long long int SCSCSizeInBytes;
     };
 
-    struct MatrixCompression_SCSC_Collection{
+    struct MatrixCompression_SCSC_Collection {
         MatrixCompression_SCSC_DataCollection SCSC_DataCollection;
-        MatrixCompression_SCSC_Size CSSC_Structure_Size;
+        MatrixCompression_SCSC_Size SCSC_Structure_Size;
+    };
+
+    struct BenchmarkTiming {
+        long long int CSR_Benchmark_Timing;
+        long long int SCSR_Benchmark_Timing;
     };
 /*
     int GetDataTypeLengthForIndexing(unsigned long aValue) {
@@ -274,6 +286,7 @@ namespace Constants {
     const bool DisplayResult = true;
     const bool DisplayProgress = true;
     const double DefaultSegmentSize = 65535; // double -> ceil function requires double
+    const long long int DefaultSegmentSizeTest = 65535; // double -> ceil function requires double
 //    const unsigned long MaxUnsignedNumber8Bytes = 18446744073709551615ul;
 }
 

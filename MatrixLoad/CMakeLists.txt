@@ -14,4 +14,8 @@ add_executable(MatrixLoad main.cpp
         BitNumber.cpp
         SegmentedMatrixCSR.cpp
         MatrixCSC.cpp
-        SegmentedMatrixCSC.cpp)
+        SegmentedMatrixCSC.cpp
+        MatrixTimingBenchmark.cpp
+        MatrixTimingBenchmark.h
+        MatrixUtilities.cpp
+        MatrixUtilities.h)

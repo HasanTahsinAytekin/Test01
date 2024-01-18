@@ -9,6 +9,7 @@
 #include "SegmentedMatrixCSR.h"
 #include "MatrixCSC.h"
 #include "SegmentedMatrixCSC.h"
+#include "MatrixTimingBenchmark.h"
 
 
 
@@ -128,11 +129,21 @@ void processFile(std::string filePath, std::string fileName, std::ofstream& outF
     auto matrixCSR = new Matrix::MatrixCSR(mmMatrixCollection);
     auto matrixCSRSizeInBytes = matrixCSR->GetMatrixSizeInBytes();
     auto x = sizeof(matrixCSR);
+    // Benchmark Timing
+//    auto benchmarkTiming = new Matrix::MatrixTimingBenchmark();
+//    Matrix::MatrixCompression_CSR_Collection& xxxxxxx = matrixCSR->GetMatrixCSRCollectionAddress();
+    auto benchmarkTimingMatrixCSR = new Matrix::MatrixTimingBenchmark::MatrixCSR(mmMatrixCollection, matrixCSR->GetMatrixCSRCollectionAddress());
+    long long int btCSR = benchmarkTimingMatrixCSR->CSR_Benchmark_Timing;
+    delete benchmarkTimingMatrixCSR;
     delete matrixCSR;
 
     auto segmentedMatrixCSR = new Matrix::SegmentedMatrixCSR(mmMatrixCollection);
     auto segmentedMatrixCSRSizeInBytes = segmentedMatrixCSR->GetMatrixSizeInBytes();
     auto segmentedMatrixCSRSizeWithBitNumberInBytes = segmentedMatrixCSR->GetMatrixSizeWithBitNumberInBytes();
+    // Benchmark Timing
+    auto benchmarkSegmentedMatrixCSR = new Matrix::MatrixTimingBenchmark::SegmentedMatrixCSR(mmMatrixCollection, segmentedMatrixCSR->GetSegmentMapAddress(), segmentedMatrixCSR->GetCSRSegmentsAddress());
+    long long int btSCSR = benchmarkSegmentedMatrixCSR->SCSR_Benchmark_Timing;
+    delete benchmarkSegmentedMatrixCSR;
     delete segmentedMatrixCSR;
 
     // CSC
@@ -166,7 +177,9 @@ void processFile(std::string filePath, std::string fileName, std::ofstream& outF
                   " Coor(VB): " << matrixSize.ValueSizeInBytes <<
                   " Coor: " << matrixSize.SizeInBytes <<
                   " CSR: " << matrixCSRSizeInBytes << // matrixCSR->GetMatrixSizeInBytes() <<
+                  " CSR-T: " << btCSR <<
                   " SCSR: " << segmentedMatrixCSRSizeInBytes << // segmentedMatrixCSR->GetMatrixSizeInBytes() <<
+                  " SCSR-T: " << btSCSR <<
                   " SCSR+: " << segmentedMatrixCSRSizeWithBitNumberInBytes << // segmentedMatrixCSR->GetMatrixSizeWithBitNumberInBytes() <<
                   " CSC: " << matrixCSCSizeInBytes << // matrixCSC->GetMatrixSizeInBytes() <<
                   " SCSC: " << segmentedMatrixCSCSizeInBytes << // segmentedMatrixCSC->GetMatrixSizeInBytes() <<
@@ -209,7 +222,9 @@ void processFile(std::string filePath, std::string fileName, std::ofstream& outF
               "; " << matrixSize.ValueSizeInBytes <<
               "; " << matrixSize.SizeInBytes <<
               "; " << matrixCSRSizeInBytes << // matrixCSR->GetMatrixSizeInBytes() <<
+              "; " << btCSR <<
               "; " << segmentedMatrixCSRSizeInBytes << // segmentedMatrixCSR->GetMatrixSizeInBytes() <<
+              "; " << btSCSR <<
               "; " << segmentedMatrixCSRSizeWithBitNumberInBytes << // segmentedMatrixCSR->GetMatrixSizeWithBitNumberInBytes() <<
               "; " << matrixCSCSizeInBytes << // matrixCSC->GetMatrixSizeInBytes() <<
               "; " << segmentedMatrixCSCSizeInBytes << // segmentedMatrixCSC->GetMatrixSizeInBytes() <<
@@ -227,31 +242,56 @@ void processFile(std::string filePath, std::string fileName, std::ofstream& outF
 
 }
 
+std::string appendTimeStampToFileName(std::string fileName){
+    char filename_extension[100];
+    time_t now = time(0);
+    struct tm tstruct;
+
+    localtime_s(&tstruct, &now);
+//    strftime(filename_extension, sizeof(filename_extension), "_%Y-%m-%d_%H-%M-%S.csv", &tstruct);
+    strftime(filename_extension, sizeof(filename_extension), "_%Y%m%d-%H%M%S.csv", &tstruct);
+
+    fileName.append(filename_extension);
+
+    return fileName;
+}
+
 void processFiles() {
     std::string path_to_dir = "C:\\IntelliJProjects\\ssget\\Data";
 
     try {
+//        std::string result_file_name = "C:\\CLionProjects\\Test\\MatrixLoad\\SparseMatrixProposalBenchmark";
+//        std::string result_file_name = appendTimeStampToFileName("C:\\CLionProjects\\Test\\MatrixLoad\\SparseMatrixProposalBenchmark");
+
         //open file for writing
-        std::ofstream fw("C:\\CLionProjects\\Test\\MatrixLoad\\SparseMatrixProposalBenchmark.csv", std::ofstream::out);
+//        std::ofstream fw("C:\\CLionProjects\\Test\\MatrixLoad\\SparseMatrixProposalBenchmark.csv", std::ofstream::out);
+        std::ofstream fw(appendTimeStampToFileName("C:\\CLionProjects\\Test\\MatrixLoad\\SparseMatrixProposalBenchmark"), std::ofstream::out);
         //check if file was successfully opened for writing
         if (fw.is_open())
         {
             // Print the header info into the benchmark results file
-            fw << "ElapsedS; File; Object; Format; Symmetry; Rows; Columns; NonzeroEntries; FieldType; MinValue; MaxValue; Coordinate_RIB; Coordinate_CIB; Coordinate_VB; Coordinate_Bytes; CSR_Bytes; SCSR_Bytes; SCSR+_Bytes; CSC_Bytes; SCSC_Bytes; SCSC+_Bytes" << std::endl;
+            fw << "ElapsedS; File; Object; Format; Symmetry; Rows; Columns; NonzeroEntries; FieldType; MinValue; MaxValue; Coordinate_RIB; Coordinate_CIB; Coordinate_VB; Coordinate_Bytes; CSR_Bytes; CSR_Timing; SCSR_Bytes; SCSR_Timing; SCSR+_Bytes; CSC_Bytes; SCSC_Bytes; SCSC+_Bytes" << std::endl;
 
 /*
             if (Constants::DisplayProgress) std::cout << "bcsstk01.mtx";
             processFile("C:\\IntelliJProjects\\ssget\\Data\\bcsstk01.mtx", "bcsstk01.mtx", fw);
 */
-//            processFile("C:\\IntelliJProjects\\ssget\\Data\\mycielskian17.mtx", "JP.mtx", fw);
+//            processFile("C:\\IntelliJProjects\\ssget\\Data\\JP.mtx", "JP.mtx", fw);
+//            processFile("C:\CLionProjects\Test\MatrixMarketData\CSR_Test.mtx", "CSR_Test.mtx", fw);
 /*
             if (Constants::DisplayProgress) std::cout << "mycielskian17.mtx";
             processFile("C:\\IntelliJProjects\\ssget\\Data\\mycielskian17.mtx", "mycielskian17.mtx", fw);
 */
 
+//            processFile("C:\\IntelliJProjects\\ssget\\Data\\CSR_Test.mtx", "CSR_Test.mtx", fw);
+//            processFile("C:\\IntelliJProjects\\ssget\\Data\\144_Dbg.mtx", "144_Dbg.mtx", fw);
+
+//            processFile("C:\\IntelliJProjects\\ssget\\Data\\lp_ken_18.mtx", "lp_ken_18.mtx", fw);
+
             for( const auto & entry : std::filesystem::directory_iterator( path_to_dir ) ) {
                 processFile(entry.path().string(), entry.path().filename().string(), fw);
             }
+
             fw.close();
         }
         else std::cout << "Problem with opening file";

@@ -11,9 +11,10 @@ namespace Matrix {
 
     class SegmentedMatrixCSR {
         std::vector<Segment> segments;
+        MatrixCompression_SCSR_Map SCSRMap;
 
     private:
-        MatrixCompression_SCSR_Collection scsrCollection;
+//        MatrixCompression_SCSR_Collection scsrCollection;
         unsigned long totalCSRSizeOfSegmentsInBytes;
         unsigned long totalCSRSizeOfSegmentsWithBitNumberInBytes;
 
@@ -26,14 +27,28 @@ namespace Matrix {
                 if ((cellData.Row >= rowRange.Start) && (cellData.Row <= rowRange.End)) {
                     if ((cellData.Column >= colRange.Start) && (cellData.Column <= colRange.End)) {
                         Data<T> segmentedData;
-                        segmentedData.Row = (short) (cellData.Row - rowRange.Start) + 1; // 1 based
-                        segmentedData.Column = (short) (cellData.Column - colRange.Start) + 1; // 1 based
+                        segmentedData.Row = (unsigned short) (cellData.Row - rowRange.Start) + 1; // 1 based
+                        segmentedData.Column = (unsigned short) (cellData.Column - colRange.Start) + 1; // 1 based
+/*
+                        if (segmentedData.Column < 0) {
+                            int q;
+                            q=0;
+                        }
+                        if ((cellData.Row == 65536) && (cellData.Column == 31066)) {
+                            int q;
+                            q=0;
+                        }
+*/
                         segmentedData.Value = cellData.Value;
                         matrixData.Coordinate.push_back(segmentedData);
                     }
                 }
             }
 
+            if (matrixData.Coordinate.empty()) {
+                // Check if encountered a NULL segment?
+                std::cout << "\nA NULL segment encountered!\n";
+            }
             return matrixData;
         }
 
@@ -47,46 +62,68 @@ namespace Matrix {
             numberOfRowSegments = ceil(matrixCollection.matrix_size.Rows / Constants::DefaultSegmentSize);
             numberOfColSegments = ceil(matrixCollection.matrix_size.Columns / Constants::DefaultSegmentSize);
 
+            SCSRMap.NumberOfRowSegments = numberOfRowSegments;
+            SCSRMap.NumberOfColSegments = numberOfColSegments;
+
             for(unsigned int segmentRow = 0; segmentRow < numberOfRowSegments; segmentRow++) {
                 int numberOfRowsToProcess;
                 SegmentRange segmentRowRange;
 
                 segmentRowRange.Start = segmentRow * Constants::DefaultSegmentSize + 1; // 1 Based
 
-                numberOfRowsToProcess = std::min((int)matrixCollection.matrix_size.Rows - segmentRowRange.Start, (int) Constants::DefaultSegmentSize - 1); // -1 is the correction of 1 based representation
-                segmentRowRange.End = segmentRowRange.Start + numberOfRowsToProcess;
+//                numberOfRowsToProcess = std::min((int)matrixCollection.matrix_size.Rows - segmentRowRange.Start, (int) Constants::DefaultSegmentSize - 1); // -1 is the correction of 1 based representation
+                numberOfRowsToProcess = std::min((int)matrixCollection.matrix_size.Rows - segmentRowRange.Start, (int) Constants::DefaultSegmentSize);
+                numberOfRowsToProcess = std::min((int)matrixCollection.matrix_size.Rows - (segmentRowRange.Start-1), (int) Constants::DefaultSegmentSize);
+                segmentRowRange.End = segmentRowRange.Start + numberOfRowsToProcess - 1;  // -1 is to meet the ending condition with <=
 
                 for(unsigned int segmentCol = 0; segmentCol < numberOfColSegments; segmentCol++) {
                     int numberOfColsToProcess;
                     SegmentRange segmentColRange;
                     MatrixDataCollection dataCollection;
 
+                    // Following data range structure is not used in this context. Left untouched for other consistencies (MatrixMarketDat)
+                    dataCollection.type_data_range.Maximum = 0;
+                    dataCollection.type_data_range.Minimum = 0;
 //                    if (Constants::DisplayProgress) std::cout << " -> segment(" << segmentRow << ", " << segmentCol << ")";
 
                     segmentColRange.Start = segmentCol * Constants::DefaultSegmentSize + 1; // 1 Based
 
-                    numberOfColsToProcess = std::min((int)matrixCollection.matrix_size.Columns - segmentColRange.Start, (int) Constants::DefaultSegmentSize - 1);
-                    segmentColRange.End = segmentColRange.Start + numberOfColsToProcess;
+//                    numberOfColsToProcess = std::min((int)matrixCollection.matrix_size.Columns - segmentColRange.Start, (int) Constants::DefaultSegmentSize - 1);
+                    numberOfColsToProcess = std::min((int)matrixCollection.matrix_size.Columns - segmentColRange.Start, (int) Constants::DefaultSegmentSize);
+                    numberOfColsToProcess = std::min((int)matrixCollection.matrix_size.Columns - segmentColRange.Start + 1, (int) Constants::DefaultSegmentSize);
+                    segmentColRange.End = segmentColRange.Start + numberOfColsToProcess - 1;  // -1 is to meet the ending condition with <=
+                    segmentColRange.End = segmentColRange.Start + numberOfColsToProcess - 1;
 
                     MatrixSize sSize;
+
+                    // Following Values are not used in this context. Left untouched for other consistencies
+                    sSize.SizeInBytes = 0;
+                    sSize.RowIndexSizeInBytes = 0;
+                    sSize.ColumnIndexSizeInBytes = 0;
+                    sSize.ValueSizeInBytes = 0;
+
                     switch (matrixCollection.matrix_header.Field) {
                         case Real:
                             dataCollection.type_float = constructSegmentMatrix<float>(matrixCollection.matrixDataCollection.type_float, segmentRowRange, segmentColRange);
                             sSize.NumberOfEntries = dataCollection.type_float.Coordinate.size();
+                            SCSRMap.SCSRFieldType = Real;
                             break;
                         case Double:
                             dataCollection.type_double = constructSegmentMatrix<double>(matrixCollection.matrixDataCollection.type_double, segmentRowRange, segmentColRange);
                             sSize.NumberOfEntries = dataCollection.type_double.Coordinate.size();
+                            SCSRMap.SCSRFieldType = Double;
                             break;
                         case Complex:
                             break;
                         case Integer:
                             dataCollection.type_int = constructSegmentMatrix<int>(matrixCollection.matrixDataCollection.type_int, segmentRowRange, segmentColRange);
                             sSize.NumberOfEntries = dataCollection.type_int.Coordinate.size();
+                            SCSRMap.SCSRFieldType = Integer;
                             break;
                         case Pattern:
                             dataCollection.type_pattern = constructSegmentMatrix<short>(matrixCollection.matrixDataCollection.type_pattern, segmentRowRange, segmentColRange);
                             sSize.NumberOfEntries = dataCollection.type_pattern.Coordinate.size();
+                            SCSRMap.SCSRFieldType = Pattern;
                             break;
                         case UnknownField:
                             break;
@@ -100,9 +137,17 @@ namespace Matrix {
                     aSegment.segmentCollection = dataCollection;
                     aSegment.type_data_range = matrixCollection.matrixDataCollection.type_data_range;
 
+                    // CSR representation of the segment
+                    auto matrixCSR = new MatrixCSR(aSegment);
+                    aSegment.segmented_CSR_Collection = matrixCSR->GetMatrixCSRCollection();
+                    delete matrixCSR;
+
                     sSize.Rows = numberOfRowsToProcess + 1; // 1 based
                     sSize.Columns = numberOfColsToProcess + 1; // 1 based
-                    sSize.SizeInBytes = 0;
+//                    sSize.SizeInBytes = 0;
+//                    sSize.RowIndexSizeInBytes = 0;
+//                    sSize.ColumnIndexSizeInBytes = 0;
+//                    sSize.ValueSizeInBytes = 0;
                     aSegment.segmentSize = sSize;
                     totalNumberOfEntries += sSize.NumberOfEntries;
 
@@ -125,11 +170,14 @@ namespace Matrix {
             unsigned long int totalCSRSizeOfSegmentsWithBitNumberInBytes = 0;
 
             for (Segment segment: segments) {
-                auto matrixCSR = new MatrixCSR(segment);
-                totalCSRSizeOfSegmentsInBytes += matrixCSR->GetMatrixSizeInBytes();
-                totalCSRSizeOfSegmentsWithBitNumberInBytes += matrixCSR->GetSegmentedMatrixSizeWithBitNumberInBytes();
-                delete matrixCSR;
-//                free(matrixCSR);
+//                All commented lines are handled during construction phase (Needs more memory space :( )
+
+//                auto matrixCSR = new MatrixCSR(segment);
+//                totalCSRSizeOfSegmentsInBytes += matrixCSR->GetMatrixSizeInBytes();
+                totalCSRSizeOfSegmentsInBytes += segment.segmented_CSR_Collection.CSR_Structure_Size.CSRSizeInBytes;
+//                totalCSRSizeOfSegmentsWithBitNumberInBytes += matrixCSR->GetSegmentedMatrixSizeWithBitNumberInBytes();
+                totalCSRSizeOfSegmentsWithBitNumberInBytes += segment.segmented_CSR_Collection.CSR_Structure_Size.SCSRSizeInBytes;
+//                delete matrixCSR;
             }
 
             this->totalCSRSizeOfSegmentsInBytes = totalCSRSizeOfSegmentsInBytes;
@@ -146,10 +194,19 @@ namespace Matrix {
             return this->totalCSRSizeOfSegmentsWithBitNumberInBytes;
         }
 
+        std::vector<Segment>& GetCSRSegmentsAddress() {
+            return this->segments;
+        }
+
+        MatrixCompression_SCSR_Map& GetSegmentMapAddress() {
+            return this->SCSRMap;
+        }
+
         ~SegmentedMatrixCSR() {
             // Destructor of the class
             this->segments.clear();
             //
+/*
             this->scsrCollection.SCSR_DataCollection.type_pattern.Values.clear();
             this->scsrCollection.SCSR_DataCollection.type_pattern.ColumnIndexes.clear();
             this->scsrCollection.SCSR_DataCollection.type_pattern.RowSeperators.clear();
@@ -165,6 +222,7 @@ namespace Matrix {
             this->scsrCollection.SCSR_DataCollection.type_int.Values.clear();
             this->scsrCollection.SCSR_DataCollection.type_int.ColumnIndexes.clear();
             this->scsrCollection.SCSR_DataCollection.type_int.RowSeperators.clear();
+*/
 
 //            std::cout << "SegmentedMatrixCSR destructor ...\n";
         }

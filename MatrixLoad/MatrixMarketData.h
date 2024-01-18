@@ -4,6 +4,7 @@
 //#include <iostream>
 #include <fstream>
 #include <iostream>
+#include <algorithm>
 //#include <vector>
 #include "GlobalDeclerations.h"
 //#include "BitNumber.h"
@@ -19,6 +20,28 @@ namespace Matrix {
     std::ostream& operator << (std::ostream& os, const MatrixSize& matrixSize);
     std::ostream& operator << (std::ostream& os, const MatrixDataCollection& matrixDataCollection);
     std::ostream& operator << (std::ostream& os, const DataRange& dataRange);
+
+    // Compares two Data structures by row and column values.
+    template<typename T>
+    bool compareCoordinateRows(const Data<T>& d1, const Data<T>& d2)
+    {
+        if (d1.Row < d2.Row) {
+            // Row1 < Row2
+            return true;
+        }
+        else if (d1.Row > d2.Row) {
+            // Row1 > Row2
+            return false;
+        }
+        else if (d1.Column < d2.Column) {
+            // Row1 = Row2 and Column1 < Column2
+            return true;
+        }
+        else {
+            // Row1 = Row2 and Column1 >= Column2
+            return false;
+        }
+    }
 
     class MatrixMarketData {
 
@@ -190,7 +213,7 @@ namespace Matrix {
                     }
                 } else if (symmetryType == Hermitian) {
                     if (newCellData.Row != newCellData.Column) {
-                        // Do not deal with compex value here (symmetricCellData.Value = std::conj(symmetricCellData.Value) (ax+b -> conj -> ax-b)
+                        // Do not deal with complex value here (symmetricCellData.Value = std::conj(symmetricCellData.Value) (ax+b -> conj -> ax-b)
                         Data<T> symmetricCellData;
                         symmetricCellData.Row = newCellData.Column;
                         symmetricCellData.Column = newCellData.Row;
@@ -200,6 +223,9 @@ namespace Matrix {
 
                 }
             }
+
+            // Sort the contents of the matrix for further processing (re-ordering the vector after symmetric etc. additions...)
+            std::sort(matrixData.Coordinate.begin(), matrixData.Coordinate.end(), compareCoordinateRows<T>);
 
             return matrixData;
         }
@@ -223,6 +249,10 @@ namespace Matrix {
                 newCellData.Value = 1;
                 matrixData.Coordinate.push_back(newCellData);
 
+//                if (newCellData.Column == 1 && newCellData.Row == 82653){
+//                    int xxxx;
+//                    xxxx=0;
+//                }
 //                std::cout << "R: " << newCellData.Row << " - C: " << newCellData.Column << " - D: " << newCellData.Value << std::endl;
                 if (symmetryType == Symmetric) {
 //                    Data<short> symmetricCellData;
@@ -233,6 +263,14 @@ namespace Matrix {
 //                    std::cout << "R: " << symmetricCellData.Row << " - C: " << symmetricCellData.Column << " - D: " << symmetricCellData.Value << std::endl;
                 }
             }
+
+            // Done in MatrixCSR
+//            if (symmetryType == Symmetric) {
+//                // Sort the vector for symmetric repetitions!
+//            }
+
+            // Sort the contents of the matrix for further processing (re-ordering the vector after symmetric etc. additions...)
+            std::sort(matrixData.Coordinate.begin(), matrixData.Coordinate.end(), compareCoordinateRows<short>);
 
             return matrixData;
         }
