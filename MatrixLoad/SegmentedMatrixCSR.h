@@ -72,7 +72,7 @@ namespace Matrix {
                 segmentRowRange.Start = segmentRow * Constants::DefaultSegmentSize + 1; // 1 Based
 
 //                numberOfRowsToProcess = std::min((int)matrixCollection.matrix_size.Rows - segmentRowRange.Start, (int) Constants::DefaultSegmentSize - 1); // -1 is the correction of 1 based representation
-                numberOfRowsToProcess = std::min((int)matrixCollection.matrix_size.Rows - segmentRowRange.Start, (int) Constants::DefaultSegmentSize);
+//                numberOfRowsToProcess = std::min((int)matrixCollection.matrix_size.Rows - segmentRowRange.Start, (int) Constants::DefaultSegmentSizeTest);
                 numberOfRowsToProcess = std::min((int)matrixCollection.matrix_size.Rows - (segmentRowRange.Start-1), (int) Constants::DefaultSegmentSize);
                 segmentRowRange.End = segmentRowRange.Start + numberOfRowsToProcess - 1;  // -1 is to meet the ending condition with <=
 
@@ -89,7 +89,7 @@ namespace Matrix {
                     segmentColRange.Start = segmentCol * Constants::DefaultSegmentSize + 1; // 1 Based
 
 //                    numberOfColsToProcess = std::min((int)matrixCollection.matrix_size.Columns - segmentColRange.Start, (int) Constants::DefaultSegmentSize - 1);
-                    numberOfColsToProcess = std::min((int)matrixCollection.matrix_size.Columns - segmentColRange.Start, (int) Constants::DefaultSegmentSize);
+//                    numberOfColsToProcess = std::min((int)matrixCollection.matrix_size.Columns - segmentColRange.Start, (int) Constants::DefaultSegmentSize);
                     numberOfColsToProcess = std::min((int)matrixCollection.matrix_size.Columns - segmentColRange.Start + 1, (int) Constants::DefaultSegmentSize);
                     segmentColRange.End = segmentColRange.Start + numberOfColsToProcess - 1;  // -1 is to meet the ending condition with <=
                     segmentColRange.End = segmentColRange.Start + numberOfColsToProcess - 1;

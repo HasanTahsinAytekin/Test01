@@ -151,6 +151,7 @@ namespace Matrix {
                 return num / Constants::DefaultSegmentSize;
             }
 
+/*
             void x(long long row, long long col) {
                 unsigned int numberOfRowSegments;
                 unsigned int numberOfColSegments;
@@ -159,6 +160,7 @@ namespace Matrix {
                 numberOfRowSegments = ceil(row / Constants::DefaultSegmentSize);
                 numberOfColSegments = ceil(col / Constants::DefaultSegmentSize);
             }
+*/
 
             template <typename ValueType>
             ValueType retrieveValueFromSCSR(unsigned short row, unsigned short col, MatrixCompression_CSR<ValueType>& csrCollectionData) {

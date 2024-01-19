@@ -335,6 +335,10 @@ int main() {
     delete segmentedMatrixCSR;
 */
 
+    double x1 = Constants::DefaultSegmentSizeTest;
+    double x2 = (double) Constants::DefaultSegmentSizeTest;
+    int x3 = (int) Constants::DefaultSegmentSize;
+    long x4 = (long) Constants::DefaultSegmentSize;
     processFiles();
 
 /*
